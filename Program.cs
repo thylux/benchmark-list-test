@@ -19,38 +19,60 @@ BenchmarkRunner.Run<PerfTests>(
 
 public class PerfTests
 {
-    public List<string> my { get; set; } = new() { "1", "2", "3", "4", "5", "6", "7", "8" };
-    public List<string> employee { get; set; } = new() { "3", "4" };
+    private class Wrapper
+    {
+        public Wrapper(string id)
+        {
+            Id = id;
+        }
+
+        public string Id { get; set; }
+    }
+
+    private List<Wrapper> my { get; set; } = new() { new Wrapper("1"), new Wrapper("2"), new Wrapper("3"), new Wrapper("4"), new Wrapper("5"), new Wrapper("6"), new Wrapper("7"), new Wrapper("8") };
+    private List<Wrapper> employee { get; set; } = new() { new Wrapper("3"), new Wrapper("4") };
 
     [Benchmark]
     public bool BigToSmallContains()
     {
-        return my.Any(c => employee.Contains(c));
+        return my.Any(c => employee.Select(x => x.Id).Contains(c.Id));
+    }
+
+    [Benchmark]
+    public bool BigToSmallWhere()
+    {
+        return my.Where(c => employee.Select(x => x.Id).Contains(c.Id)).Any();
     }
 
     [Benchmark]
     public bool BigToSmallAny()
     {
-        return my.Any(c => employee.Any(x => x == c));
+        return my.Any(c => employee.Any(x => x.Id == c.Id));
     }
 
     [Benchmark]
     public bool SmallToBigContains()
     {
-        return employee.Any(c => my.Contains(c));
+        return employee.Any(c => my.Select(x => x.Id).Contains(c.Id));
+    }
+
+    [Benchmark]
+    public bool SmallToBigWhere()
+    {
+        return employee.Where(c => my.Select(x => x.Id).Contains(c.Id)).Any();
     }
 
     [Benchmark]
     public bool SmallToBigAny()
     {
-        return employee.Any(c => my.Any(x => x == c));
+        return employee.Any(c => my.Any(x => x.Id == c.Id));
     }
 
     [Benchmark]
     public bool Dictionary()
     {
-        var dict = employee.ToDictionary(x => x, x => x);
+        var dict = employee.ToDictionary(x => x.Id, x => x);
 
-        return my.Any(c => dict.ContainsKey(c));
+        return my.Any(c => dict.ContainsKey(c.Id));
     }
 }
